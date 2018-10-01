@@ -1,101 +1,85 @@
 #pragma once
-#include <iostream>
-#include <iomanip>
 #include <ctime>
-#include "Timer.h"
 #include <random>
-#include <vector>
+#include "Timer.h"
 
-class Sort : public Timer
+
+template<class T>
+class Sort
 {
-	int arrSize = 20;
-	std::vector<int> sortMe;
+	int ARRSIZE = 20;
+	T *sortMe;
 	int sortIteration = 0;
-	void swap(int list[], int m, int k)
+	void swap(T a[], int m, int k)
 	{
-		int tmp = list[m];
-		list[m] = list[k];
-		list[k] = tmp;
+		T tmp = a[m];
+		a[m] = a[k];
+		a[k] = tmp;
 	}
-	int choosePivot(int i, int j)
+	void quickSort(T a[], int left, int right, int sortIt)
 	{
-		return((i + j) / 2);
-	}
-	void merge(int a[], int low, int high, int mid)
-	{
-		int i, j, k, c[100];
-		i = low;
-		j = mid + 1;
-		k = low;
-		while ((i < mid) && (j < high))
+	///I was getting errors with the code in the lecture notes so I rewrote
+	///the algorithm to work. What was happening is the i and j were
+	///never able to leave the while loop and kept flipping only two numbers indefinantly
+		int i = left, j = right;
+		T k = a[(left + right) / 2];
+
+		while (i <= j)
 		{
-			if (a[i] < a[j])
-			{
-				c[k] = a[i];
-				k++;
+			while (a[i] < k)
 				i++;
-			}
-			else
+			while (a[j] > k)
+				j--;
+			if (i <= j)
 			{
-				c[k] = a[j];
-				k++;
-				j++;
+				swap(a, i, j);
+				i++;
+				j--;
 			}
+			this->sortIteration++;
 		}
-		while (i < mid)
-		{
-			c[k] = a[j];
-			k++;
-			j++;
-		}
-		while (j < high)
-		{
-			c[k] = a[i];
-			k++;
-			j++;
-		}
-		for (i = low; i < k; i++)
-		{
-			a[i] = c[i];
-		}
+		if (left < j)
+			quickSort(a, left, j, this->sortIteration++);
+		if (i < right)
+			quickSort(a, i, right, this->sortIteration++);
+		return;
 	}
 	void fillArray(int min, int max)
 	{
-		for (int i = 0; i < this->size(); i++)
-			this->sortMe.push_back(rand() % max + min);
+		for (int i = 0; i < ARRSIZE; i++)
+			this->sortMe[i] = static_cast<T>((((double)rand() / (double)RAND_MAX) * max - min) + min);
 	}
 public:
-	Sort()
-	{
-		this->unsort(arrSize, 0, 100);
-	}
+	Sort() :sortMe(new T[ARRSIZE]) { this->unsort(); }
+	
+	Sort(int size) :sortMe(new T[size]) { this->ARRSIZE = size; this->unsort(); }
 
-	Sort(int size, int min, int max)
-	{
-		this->unsort(size, min, max);
-	}
+	Sort(int size, int min, int max) :sortMe(new T[size]) { this->unsort(size, min, max); }
 
-	int size()
-	{
-		return this->arrSize;
-	}
+	Sort(T a[], int size) :sortMe(new T[size]) { this->setArray(a, size); }
 
-	int sortCount()
+	void setArray(T a[], int size)
 	{
-		return sortIteration;
+		this->ARRSIZE = size;
+		for (int i = 0; i < ARRSIZE; i++)
+			this->sortMe[i] = a[i];
 	}
+	int size() { return this->ARRSIZE; }
+
+	int sortCount() { return sortIteration; }
+
+	void unsort() { this->unsort(ARRSIZE, 10, 1000); }
 
 	void unsort(int size, int min, int max)
 	{
 		srand(static_cast<int>(time(0)));
-		this->sortMe.clear();
-		this->arrSize = size;
+		this->ARRSIZE = size;
 		this->fillArray(min, max);
 	}
 
 	void print()
 	{
-		for (int i = 0; i < this->size(); i++)
+		for (int i = 0; i < this->ARRSIZE; i++)
 		{
 			std::cout << this->sortMe[i] << " ";
 		}
@@ -105,10 +89,10 @@ public:
 	void insertionSort()
 	{
 		this->sortIteration = 0;
-		int hold = 0;
+		T hold = 0;
 		int search = 0;
 
-		this->startTimer();
+		timer t;
 		for (int current = 1; current < this->size(); current++)
 		{
 			hold = this->sortMe[current];
@@ -120,16 +104,15 @@ public:
 			this->sortMe[search + 1] = hold;
 			this->sortIteration++;
 		}
-		this->stopTimer();
 	}
 
 	void selectionSort()
 	{
 		this->sortIteration = 0;
 		int smallest = 0;
-		int holdData = 0;
+		T holdData;
 
-		this->startTimer();
+		timer t;
 		for (int current = 0; current < this->size(); current++)
 		{
 			smallest = current;
@@ -146,49 +129,21 @@ public:
 			this->sortMe[smallest] = holdData;
 			this->sortIteration++;
 		}
-		this->stopTimer();
-		return;
+	}
+	void quickSort()
+	{
+		timer t;
+		this->quickSort(this->sortMe, 0, this->ARRSIZE - 1, this->sortIteration = 0);
 	}
 	
-	void quickSort(int list[], int m, int n, int sortIt = 0) //<+++++ Recursion
-	{
-		int key, i, j, k;
-		if (m < n)
-		{
-			k = choosePivot(m, n);
-			swap(list, m, k);
-			key = list[m];
-			i = m + 1;
-			j = n;
-
-			while (i <= j)
-			{
-				while ((i <= n) && (list[i] <= key))
-					i++;
-				while ((i >= m) && (list[j] <= key))
-					j--;
-				if (i < j)
-					swap(list, i, j);
-				sortIt++;
-			}
-			swap(list, m, j);
-
-			//recursively sort the lesser list
-			quickSort(list, m, j - 1, sortIt++);
-
-			//recursively sort the greater list
-			quickSort(list, j + 1, n, sortIt++);
-		}
-		return;
-	}
 	void shellSort()
 	{
 		this->sortIteration = 0;
-		int hold;
+		T hold;
 		int incre;
 		int index;
 
-		this->startTimer();
+		timer t;
 		incre = this->size() / 2;
 		while (incre != 0)
 		{
@@ -214,20 +169,5 @@ public:
 			incre = incre / 2;
 			sortIteration++;
 		}
-		this->stopTimer();
-
-		return;
-	}
-	int mergesort(int a[], int low, int high)//<+++++ Recursion
-	{
-		int mid;
-		if (low < high)
-		{
-			mid = (low + high) / 2;
-			mergesort(a, low, mid);
-			mergesort(a, mid + 1, high);
-			merge(a, low, high, mid);
-		}
-		return(0);
 	}
 };

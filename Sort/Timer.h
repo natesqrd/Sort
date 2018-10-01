@@ -1,19 +1,17 @@
 #pragma once
-#include <windows.h>
-
-class Timer
+#include <iostream>
+#include <chrono>
+struct timer
 {
-private:
-	LARGE_INTEGER start;
-	LARGE_INTEGER stop;
-	LARGE_INTEGER freq;
-	double PCFreq;
-	__int64 CounterStart;
-public:
-	Timer();
-	void startTimer();
-	void stopTimer();
-	double getMilli();
-	double getSeconds();
-	double getMicro();
+	std::chrono::system_clock::time_point start, end;
+	std::chrono::duration<float> duration;
+
+	timer() { start = std::chrono::system_clock::now(); }
+
+	~timer()
+	{
+		end = std::chrono::system_clock::now();
+		duration = end - start;
+		std::cout << "Function took " << duration.count() * 1000.0f << "ms to complete\n";
+	}
 };
